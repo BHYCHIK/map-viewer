@@ -26,10 +26,8 @@ type
     odOpenLandscape: TOpenDialog;
     procedure mmExitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     map: TBitmap;
-    terrainView: TBitmap;
   public
     { Public declarations }
   end;
@@ -41,14 +39,9 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
-begin
-  terrainView.Free;
-end;
-
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  terrainView = TBitmap.Create;
+  map = TBitmap.Create;
 end;
 
 procedure TMainForm.mmExitClick(Sender: TObject);

@@ -1,0 +1,21 @@
+unit terrain;
+
+interface
+
+type
+  TPolygonPoint = record
+    X: Extended;
+    Y: Extended;
+    Z: Extended;
+    RealHeight: Extended;
+  end;
+
+  TPolygon = record
+    Point1: Extended;
+    Point2: Extended;
+    Point3: Extended;
+  end;
+
+implementation
+
+end.

@@ -1,0 +1,36 @@
+unit terrain;
+
+interface
+uses
+  Classes, Graphics;
+
+type
+  TPolygonPoint = record
+    X: Extended;
+    Y: Extended;
+    Z: Extended;
+    RealHeight: Extended;
+  end;
+
+  TPolygon = record
+    Point1: Extended;
+    Point2: Extended;
+    Point3: Extended;
+  end;
+
+  TPolygonPoints = array of array of TPolygonPoint;
+
+  function OpenTerrain(const path: String): TPolygonPoints;
+
+implementation
+
+function OpenTerrain(const path: String): TPolygonPoints;
+const
+  Modifier = 5;
+var
+
+begin
+
+end;
+
+end.

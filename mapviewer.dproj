@@ -52,6 +52,7 @@
 			<DCCReference Include="mf.pas">
 				<Form>MainForm</Form>
 			</DCCReference>
+			<DCCReference Include="terrain.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

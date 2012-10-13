@@ -44,10 +44,12 @@ implementation
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   terrainView.Free;
+  map.Free;
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  map = TBitmap.Create;
   terrainView = TBitmap.Create;
 end;
 

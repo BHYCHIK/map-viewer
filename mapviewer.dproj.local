@@ -7,5 +7,7 @@
     <Transaction>1899.12.30 00:00:00.000.701,C:\Users\BHYCHIK\Documents\RAD Studio\Projects\Project1.dproj=C:\botva\mapviewer\mapviewer.dproj</Transaction>
     <Transaction>1899.12.30 00:00:00.000.290,C:\botva\mapviewer\Unit1.dfm=C:\botva\mapviewer\mf.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.106,=C:\Users\BHYCHIK\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2012.10.10 17:00:56.887,=C:\botva\mapviewer\Unit1.pas</Transaction>
+    <Transaction>2012.10.10 17:01:13.374,C:\botva\mapviewer\terrain.pas=C:\botva\mapviewer\Unit1.pas</Transaction>
   </Transactions>
 </BorlandProject>

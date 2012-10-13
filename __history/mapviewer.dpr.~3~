@@ -2,8 +2,7 @@ program mapviewer;
 
 uses
   Forms,
-  mf in 'mf.pas' {MainForm},
-  terrain in 'terrain.pas';
+  mf in 'mf.pas' {MainForm};
 
 {$R *.res}
 

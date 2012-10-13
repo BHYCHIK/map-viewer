@@ -12,7 +12,6 @@ object MainForm: TMainForm
   Font.Style = []
   Menu = MainMenu
   OldCreateOrder = False
-  OnClose = FormClose
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
@@ -35,6 +34,8 @@ object MainForm: TMainForm
     TabOrder = 0
     object tsCamera: TTabSheet
       Caption = #1050#1072#1084#1077#1088#1072
+      ExplicitLeft = 2
+      ExplicitTop = 28
       object lePosX: TLabeledEdit
         Left = 3
         Top = 24
@@ -113,6 +114,8 @@ object MainForm: TMainForm
     object tsLight: TTabSheet
       Caption = #1057#1074#1077#1090
       ImageIndex = 1
+      ExplicitLeft = 2
+      ExplicitTop = 28
     end
   end
   object MainMenu: TMainMenu
