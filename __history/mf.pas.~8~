@@ -8,7 +8,7 @@ uses
 
 type
   TMainForm = class(TForm)
-    pbLandscape: TPaintBox;
+    PaintBox1: TPaintBox;
     MainMenu: TMainMenu;
     mmFile: TMenuItem;
     mmOpen: TMenuItem;
@@ -28,7 +28,6 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure mmOpenClick(Sender: TObject);
     procedure btCameraApplyClick(Sender: TObject);
-    procedure pbLandscapePaint(Sender: TObject);
   private
     terrainView: TBitmap;
     model: TPolygonPoints;
@@ -47,14 +46,13 @@ procedure TMainForm.btCameraApplyClick(Sender: TObject);
 var
   camera: TPolygonPoint;
 begin
-  camera.X := StrToFloat(lePosX.Text);
+  camera.X := StrToInt(lePosX.Text);
   camera.Y := StrToInt(lePosY.Text);
-  camera.Z := StrToFloat(lePosZ.Text);
+  camera.Z := StrToInt(lePosZ.Text);
 
   DrawWire(model, camera, StrToFloat(leRotAlpha.Text), StrToFloat(leRoBeta.Text),
-    terrainView);
-
-  Invalidate;
+    terrainView.Canvas);
+  PaintBox1.Canvas.Draw(0, 0, terrainView);
 end;
 
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -65,8 +63,6 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   terrainView := TBitmap.Create;
-  terrainView.Width := pbLandscape.Width;
-  terrainView.Height := pbLandscape.Height;
 end;
 
 procedure TMainForm.mmExitClick(Sender: TObject);
@@ -81,11 +77,6 @@ begin
     model := OpenTerrain(odOpenLandscape.FileName);
   end;
 
-end;
-
-procedure TMainForm.pbLandscapePaint(Sender: TObject);
-begin
-  pbLandscape.Canvas.Draw(0, 0, terrainView);
 end;
 
 end.

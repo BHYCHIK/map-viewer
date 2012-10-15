@@ -47,9 +47,9 @@ procedure TMainForm.btCameraApplyClick(Sender: TObject);
 var
   camera: TPolygonPoint;
 begin
-  camera.X := StrToFloat(lePosX.Text);
+  camera.X := StrToInt(lePosX.Text);
   camera.Y := StrToInt(lePosY.Text);
-  camera.Z := StrToFloat(lePosZ.Text);
+  camera.Z := StrToInt(lePosZ.Text);
 
   DrawWire(model, camera, StrToFloat(leRotAlpha.Text), StrToFloat(leRoBeta.Text),
     terrainView);

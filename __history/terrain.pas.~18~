@@ -55,27 +55,21 @@ function CentralProjectionOfPoint(point: TPolygonPoint;
     const camera: TPolygonPoint;
     Alpha, Beta: extended): TPolygonPoint;
 var
-  CosAlpha, CosBeta, SinAlpha, SinBeta: Extended;
   Zplane: Extended;
 begin
   Alpha := Alpha * PI / 180.0;
   Beta := Beta * PI / 180.0;
 
-  Zplane := camera.Z - 9000;
-
-  CosAlpha := Cos(Alpha);
-  CosBeta := Cos(Beta);
-  SinAlpha := Sin(Alpha);
-  SinBeta := Sin(Beta);
+  Zplane := camera.Z - 400;
 
   point.X := point.X - camera.X;
   point.Y := point.Y - camera.Y;
 
-  result.X := point.X * CosAlpha - point.Y * SinAlpha;
-  result.Y := point.X * SinAlpha * CosBeta + point.Y * CosAlpha * CosBeta
-              - point.Z * SinBeta;
-  result.Z := point.X * SinAlpha * SinBeta + point.Y * CosAlpha * SinBeta
-              + point.Z * CosBeta;
+  result.X := (point.X * cos(Alpha) - point.Y * sin(Alpha));
+  result.Y := (point.X * sin(Alpha) * cos(Beta) + point.Y * cos(Alpha)* cos(Beta)
+              - point.Z * sin(Beta));
+  result.Z := (point.X * sin(Alpha) * sin(Beta) + point.Y * cos(Alpha)* sin(Beta)
+              + point.Z * cos(Beta));
 
 
   result.X := result.X * (camera.Z - Zplane)/(camera.Z - result.Z);
@@ -86,6 +80,8 @@ end;
 function AxonometricProjectionOfPoint(point: TPolygonPoint;
     const camera: TPolygonPoint;
     Alpha, Beta: extended): TPolygonPoint;
+const
+  Zplane = 999;
 begin
   Alpha := Alpha * PI / 180.0;
   Beta := Beta * PI / 180.0;
@@ -123,7 +119,6 @@ procedure DrawWire(const Model: TPolygonPoints;
 var
   Projection: TPolygonPoints;
   X, Y: Integer;
-  wdth, hgth: Integer;
 begin
   Projection := CentralProjectionOfModel(Model, Camera, Alpha, Beta);
 
@@ -132,29 +127,26 @@ begin
   landscape.canvas.Rectangle(-10, -10, 10000, 10000);
   landscape.Canvas.Pen.Width := 1;
 
-  wdth := landscape.Width div 2;
-  hgth := landscape.Height div 2;
-
   for X := Low(model) to High(model) - 1 do
   begin
     for Y := Low(model[Low(model)]) to High(model[Low(model)]) - 1 do
     begin
       with landscape do
       begin
-      canvas.MoveTo(wdth + Round(Projection[X, Y].X), hgth + Round(Projection[X, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
+      canvas.MoveTo(Round(Projection[X, Y].X), Round(Projection[X, Y].Y));
+      canvas.LineTo(Round(Projection[X + 1, Y].X), Round(Projection[X + 1, Y].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y].X), hgth + Round(Projection[X, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
+      canvas.MoveTo(Round(Projection[X, Y].X), Round(Projection[X, Y].Y));
+      canvas.LineTo(Round(Projection[X, Y + 1].X), Round(Projection[X, Y + 1].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
+      canvas.MoveTo(Round(Projection[X, Y + 1].X), Round(Projection[X, Y + 1].Y));
+      canvas.LineTo(Round(Projection[X + 1, Y].X), Round(Projection[X + 1, Y].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y + 1].X), hgth + Round(Projection[X + 1, Y + 1].Y));
+      canvas.MoveTo(Round(Projection[X, Y + 1].X), Round(Projection[X, Y + 1].Y));
+      canvas.LineTo(Round(Projection[X + 1, Y + 1].X), Round(Projection[X + 1, Y + 1].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y + 1].X), hgth + Round(Projection[X + 1, Y + 1].Y));
+      canvas.MoveTo(Round(Projection[X + 1, Y].X), Round(Projection[X + 1, Y].Y));
+      canvas.LineTo(Round(Projection[X + 1, Y + 1].X), Round(Projection[X + 1, Y + 1].Y));
       end;
     end;
   end;

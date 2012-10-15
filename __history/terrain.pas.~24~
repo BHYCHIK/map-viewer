@@ -123,7 +123,6 @@ procedure DrawWire(const Model: TPolygonPoints;
 var
   Projection: TPolygonPoints;
   X, Y: Integer;
-  wdth, hgth: Integer;
 begin
   Projection := CentralProjectionOfModel(Model, Camera, Alpha, Beta);
 
@@ -132,29 +131,26 @@ begin
   landscape.canvas.Rectangle(-10, -10, 10000, 10000);
   landscape.Canvas.Pen.Width := 1;
 
-  wdth := landscape.Width div 2;
-  hgth := landscape.Height div 2;
-
   for X := Low(model) to High(model) - 1 do
   begin
     for Y := Low(model[Low(model)]) to High(model[Low(model)]) - 1 do
     begin
       with landscape do
       begin
-      canvas.MoveTo(wdth + Round(Projection[X, Y].X), hgth + Round(Projection[X, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
+      canvas.MoveTo(landscape.Width div 2 + Round(Projection[X, Y].X), landscape.Height div 2 + Round(Projection[X, Y].Y));
+      canvas.LineTo(landscape.Width div 2 + Round(Projection[X + 1, Y].X), landscape.Height div 2 + Round(Projection[X + 1, Y].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y].X), hgth + Round(Projection[X, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
+      canvas.MoveTo(landscape.Width div 2 + Round(Projection[X, Y].X), landscape.Height div 2 + Round(Projection[X, Y].Y));
+      canvas.LineTo(landscape.Width div 2 + Round(Projection[X, Y + 1].X), landscape.Height div 2 + Round(Projection[X, Y + 1].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
+      canvas.MoveTo(landscape.Width div 2 + Round(Projection[X, Y + 1].X), landscape.Height div 2 + Round(Projection[X, Y + 1].Y));
+      canvas.LineTo(landscape.Width div 2 + Round(Projection[X + 1, Y].X), landscape.Height div 2 + Round(Projection[X + 1, Y].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y + 1].X), hgth + Round(Projection[X + 1, Y + 1].Y));
+      canvas.MoveTo(landscape.Width div 2 + Round(Projection[X, Y + 1].X), landscape.Height div 2 + Round(Projection[X, Y + 1].Y));
+      canvas.LineTo(landscape.Width div 2 + Round(Projection[X + 1, Y + 1].X), landscape.Height div 2 + Round(Projection[X + 1, Y + 1].Y));
 
-      canvas.MoveTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y + 1].X), hgth + Round(Projection[X + 1, Y + 1].Y));
+      canvas.MoveTo(landscape.Width div 2 + Round(Projection[X + 1, Y].X), landscape.Height div 2 + Round(Projection[X + 1, Y].Y));
+      canvas.LineTo(landscape.Width div 2 + Round(Projection[X + 1, Y + 1].X), landscape.Height div 2 + Round(Projection[X + 1, Y + 1].Y));
       end;
     end;
   end;

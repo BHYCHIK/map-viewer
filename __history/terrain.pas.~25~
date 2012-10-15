@@ -133,7 +133,7 @@ begin
   landscape.Canvas.Pen.Width := 1;
 
   wdth := landscape.Width div 2;
-  hgth := landscape.Height div 2;
+  hgth := landscape.Height div 2
 
   for X := Low(model) to High(model) - 1 do
   begin
