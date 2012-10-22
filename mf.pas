@@ -23,6 +23,10 @@ type
     leRoBeta: TLabeledEdit;
     btCameraApply: TButton;
     odOpenLandscape: TOpenDialog;
+    leSunX: TLabeledEdit;
+    leSunY: TLabeledEdit;
+    leSunZ: TLabeledEdit;
+    btSunApply: TButton;
     procedure mmExitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -46,13 +50,20 @@ implementation
 procedure TMainForm.btCameraApplyClick(Sender: TObject);
 var
   camera: TPolygonPoint;
+  sun: TPolygonPoint;
 begin
-  camera.X := StrToFloat(lePosX.Text);
-  camera.Y := StrToInt(lePosY.Text);
-  camera.Z := StrToFloat(lePosZ.Text);
+  camera.RealX := StrToFloat(lePosX.Text);
+  camera.RealY := StrToFloat(lePosY.Text);
+  camera.RealZ := StrToFloat(lePosZ.Text);
+
+  sun.RealX := StrToFloat(leSunX.Text);
+  sun.RealY := StrToFloat(leSunY.Text);
+  sun.RealZ := StrToFloat(leSunZ.Text);
 
   DrawWire(model, camera, StrToFloat(leRotAlpha.Text), StrToFloat(leRoBeta.Text),
-    terrainView);
+    terrainView);{
+  DrawSimple(model, camera, sun,StrToFloat(leRotAlpha.Text), StrToFloat(leRoBeta.Text), terrainView); }
+
 
   Invalidate;
 end;

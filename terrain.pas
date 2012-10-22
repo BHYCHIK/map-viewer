@@ -7,27 +7,105 @@ uses
 
 type
   TPolygonPoint = record
-    X: Extended;
-    Y: Extended;
-    Z: Extended;
-    RealHeight: Extended;
+    RealX: Extended;
+    RealY: Extended;
+    RealZ: Extended;
+    ProjX: Extended;
+    ProjY: Extended;
+    ProjZ: Extended;
   end;
 
   TPolygon = record
-    Point1: Extended;
-    Point2: Extended;
-    Point3: Extended;
+    Points: array[1..3] of TPolygonPoint;
+    Normal: TPolygonPoint;
   end;
+
+  TZBuffer = array of array of Extended;
 
   TPolygonPoints = array of array of TPolygonPoint;
 
   function OpenTerrain(const path: String): TPolygonPoints;
-  procedure DrawWire(const Model: TPolygonPoints;
+  procedure DrawWire(var Model: TPolygonPoints;
                    const Camera: TPolygonPoint;
+                   const Alpha, Beta: extended;
+                   var landscape: TBitmap);
+  procedure DrawSimple(var Model: TPolygonPoints;
+                   const Camera: TPolygonPoint;
+                   const Sun: TPolygonPoint;
                    const Alpha, Beta: extended;
                    var landscape: TBitmap);
 
 implementation
+
+procedure CentralProjectionOfPoint(var point: TPolygonPoint;
+    const camera: TPolygonPoint;
+    Alpha, Beta: extended);
+var
+  CosAlpha, CosBeta, SinAlpha, SinBeta: Extended;
+  Zplane: Extended;
+  tmpX, tmpY, tmpZ: Extended;
+begin
+  Alpha := Alpha * PI / 180.0;
+  Beta := Beta * PI / 180.0;
+
+  Zplane := camera.RealZ - 9000;
+
+  CosAlpha := Cos(Alpha);
+  CosBeta := Cos(Beta);
+  SinAlpha := Sin(Alpha);
+  SinBeta := Sin(Beta);
+
+  tmpX := point.RealX - camera.RealX;
+  tmpY := point.RealY - camera.RealY;
+  tmpZ := point.RealZ;
+
+  point.ProjX := (tmpX * CosAlpha - tmpY * SinAlpha)*camera.RealZ;
+  point.ProjY := (tmpX * SinAlpha * CosBeta + tmpY * CosAlpha * CosBeta
+              - tmpZ * SinBeta)*camera.RealZ;
+  point.ProjZ := (tmpX * SinAlpha * SinBeta + tmpY * CosAlpha * SinBeta
+              + tmpZ * CosBeta)*camera.RealZ;
+
+  {tmpX := point.RealX - camera.RealX;
+  tmpY := point.RealY - camera.RealY;
+  tmpZ := point.RealZ;
+
+  point.ProjX := tmpX * CosAlpha - tmpY * SinAlpha;
+  point.ProjY := tmpX * SinAlpha * CosBeta + tmpY * CosAlpha * CosBeta
+              - tmpZ * SinBeta;
+  point.ProjZ := tmpX * SinAlpha * SinBeta + tmpY * CosAlpha * SinBeta
+              + tmpZ * CosBeta;
+
+  point.ProjX := point.ProjX * (camera.RealZ - Zplane)/(camera.RealZ - point.ProjZ);
+  point.ProjY := point.ProjY * (camera.RealZ - Zplane)/(camera.RealZ - point.ProjZ);
+  point.ProjZ := point.ProjZ - Zplane;  }
+end;
+
+
+function GetZOnPlane(const Polygon: TPolygon; const X, Y: Extended):Extended;
+var
+  X21, Y21, Z21, X31, Y31, Z31: Extended;
+  a, b, c, d: Extended;
+  pnt: TPolygonPoint;
+begin
+  X21 := Polygon.Points[2].ProjX - Polygon.Points[1].ProjX;
+  Y21 := Polygon.Points[2].ProjY - Polygon.Points[1].ProjY;
+  Z21 := Polygon.Points[2].ProjZ - Polygon.Points[1].ProjZ;
+  X31 := Polygon.Points[3].ProjX - Polygon.Points[1].ProjX;
+  Y31 := Polygon.Points[3].ProjY - Polygon.Points[1].ProjY;
+  Z31 := Polygon.Points[3].ProjZ - Polygon.Points[1].ProjZ;
+
+  a := y21 * z31 - y31 * z21;
+  b := z21 * x31 - z31 * x21;
+  c := x21 * y31 - x31 * y21;
+  d := x31 * y21 * Polygon.Points[1].ProjZ + y31*z21*Polygon.Points[1].ProjX +
+      x21 * y31 * Polygon.Points[1].ProjY - y21 * z31 * Polygon.Points[1].ProjX -
+      x21 * y31 * Polygon.Points[1].ProjZ - z21 * x31 * Polygon.Points[1].ProjY;
+
+  if c <> 0 then
+    result := (-a*x-b*y-d)/c
+  else
+    result := Polygon.Points[1].ProjZ;
+end;
 
 function OpenTerrain(const path: String): TPolygonPoints;
 const
@@ -43,89 +121,248 @@ begin
   begin
     for Y := Low(Result[x]) to High(Result[x]) do
     begin
-      result[x, y].X := X * Modifier;
-      result[x, y].Y := Y * Modifier;
-      result[x, y].Z := getRValue(map.Canvas.Pixels[X, Y]) * Modifier;
+      result[x, y].RealX := X * Modifier;
+      result[x, y].RealY := Y * Modifier;
+      result[x, y].RealZ := getRValue(map.Canvas.Pixels[X, Y]) * Modifier;
     end;
   end;
   map.Free;
 end;
 
-function CentralProjectionOfPoint(point: TPolygonPoint;
+procedure CentralProjectionOfModel(var model: TPolygonPoints;
     const camera: TPolygonPoint;
-    Alpha, Beta: extended): TPolygonPoint;
-var
-  CosAlpha, CosBeta, SinAlpha, SinBeta: Extended;
-  Zplane: Extended;
-begin
-  Alpha := Alpha * PI / 180.0;
-  Beta := Beta * PI / 180.0;
-
-  Zplane := camera.Z - 9000;
-
-  CosAlpha := Cos(Alpha);
-  CosBeta := Cos(Beta);
-  SinAlpha := Sin(Alpha);
-  SinBeta := Sin(Beta);
-
-  point.X := point.X - camera.X;
-  point.Y := point.Y - camera.Y;
-
-  result.X := point.X * CosAlpha - point.Y * SinAlpha;
-  result.Y := point.X * SinAlpha * CosBeta + point.Y * CosAlpha * CosBeta
-              - point.Z * SinBeta;
-  result.Z := point.X * SinAlpha * SinBeta + point.Y * CosAlpha * SinBeta
-              + point.Z * CosBeta;
-
-
-  result.X := result.X * (camera.Z - Zplane)/(camera.Z - result.Z);
-  result.Y := result.Y * (camera.Z - Zplane)/(camera.Z - result.Z);
-  result.Z := result.Z - Zplane;
-end;
-
-function AxonometricProjectionOfPoint(point: TPolygonPoint;
-    const camera: TPolygonPoint;
-    Alpha, Beta: extended): TPolygonPoint;
-begin
-  Alpha := Alpha * PI / 180.0;
-  Beta := Beta * PI / 180.0;
-
-  point.X := point.X - camera.X;
-  point.Y := point.Y - camera.Y;
-
-  result.X := (point.X * cos(Alpha) - point.Y * sin(Alpha)) * camera.Z;
-  result.Y := (point.X * sin(Alpha) * cos(Beta) + point.Y * cos(Alpha)* cos(Beta)
-              - point.Z * sin(Beta)) * camera.Z;
-  result.Z := (point.X * sin(Alpha) * sin(Beta) + point.Y * cos(Alpha)* sin(Beta)
-              + point.Z * cos(Beta)) * camera.Z;
-end;
-
-function CentralProjectionOfModel(const model: TPolygonPoints;
-    const camera: TPolygonPoint;
-    const Alpha, Beta: extended): TPolygonPoints;
+    const Alpha, Beta: extended);
 var
   X, Y: Integer;
 begin
-  SetLength(result, High(model) + 1, High(model[High(model)]) + 1);
   for X := Low(model) to High(model) do
   begin
     for Y := Low(model[Low(model)]) to High(model[Low(model)]) do
     begin
-      result[X, Y] := CentralProjectionOfPoint(model[X, Y], camera, Alpha, Beta);
+      CentralProjectionOfPoint(model[X, Y], camera, Alpha, Beta);
     end;
   end;
 end;
 
-procedure DrawWire(const Model: TPolygonPoints;
+procedure NormalizeVector(var Vector: TPolygonPoint);
+var
+  lngth: Extended;
+begin
+  lngth := sqrt(sqr(Vector.RealX) + sqr(Vector.RealY)
+   + sqr(Vector.RealZ));
+  Vector.RealX := Vector.RealX / lngth;
+  Vector.RealY := Vector.RealY / lngth;
+  Vector.RealZ := Vector.RealZ / lngth;
+
+  if Vector.RealZ < 0 then
+  begin
+    Vector.RealX := -Vector.RealX;
+    Vector.RealY := -Vector.RealY;
+    Vector.RealZ := -Vector.RealZ;
+  end;
+end;
+
+
+procedure FindNormal(var polygon: TPolygon);
+var
+  dx1, dx2: Extended;
+  dy1, dy2: Extended;
+  dz1, dz2: Extended;
+begin
+  dx1 := polygon.Points[2].RealX - polygon.Points[1].RealX;
+  dy1 := polygon.Points[2].RealY - polygon.Points[1].RealY;
+  dz1 := polygon.Points[2].RealZ - polygon.Points[1].RealZ;
+  dx2 := polygon.Points[3].RealX - polygon.Points[2].RealX;
+  dy2 := polygon.Points[3].RealY - polygon.Points[2].RealY;
+  dz2 := polygon.Points[3].RealZ - polygon.Points[2].RealZ;
+
+  polygon.Normal.RealX := dy1 * dz2 - dz1 * dy2;
+  polygon.Normal.RealY := dz1 * dx2 - dx2 * dz1;
+  polygon.Normal.RealZ := dx1 * dy2 - dy1 * dx2;
+
+  NormalizeVector(polygon.Normal);
+
+end;
+
+function MakePolygon(const P1, P2, P3: TPolygonPoint): TPolygon;
+var
+  I: Integer;
+  J: Integer;
+  tmpPoint: TPolygonPoint;
+begin
+  result.Points[1] := P1;
+  result.Points[2] := P2;
+  result.Points[3] := P3;
+
+  for I := 1 to 2 do
+  begin
+    for J := I + 1 to 3 do
+    begin
+      if result.Points[I].ProjY > result.Points[J].ProjY then
+      begin
+        tmpPoint := result.Points[I];
+        result.Points[I] := result.Points[J];
+        result.Points[J] := tmpPoint;
+      end;
+    end;
+  end;
+
+  if result.Points[3].ProjX > result.Points[2].ProjX then
+  begin
+    tmpPoint := result.Points[2];
+    result.Points[2] := result.Points[3];
+    result.Points[3] := tmpPoint
+  end;
+
+
+  FindNormal(result);
+end;
+
+function GetIntersectX(const P1, P2: TPolygonPoint; const C: Integer):Integer;
+begin
+  result := Round(P1.ProjX + (P2.ProjX - P1.ProjX)) * C;
+end;
+
+procedure ZBufferHandler(const X, Y: Integer; const Z: Extended; var ZBuffer: TZBuffer;
+  var landscape: TBitmap; color: TColor);
+begin
+  if (X >= 0) and (X <= High(ZBuffer)) and (Y >= 0) and (Y <= High(ZBuffer[0])) then
+  begin
+    if ZBuffer[X, Y] < Z then
+    begin
+      ZBuffer[X, Y] := Z;
+      landscape.Canvas.Pixels[X, Y] := color;
+    end;
+  end;
+end;
+
+procedure DrawSimplePolygon(const polygon: TPolygon;  var ZBuffer: TZBuffer;
+                   var landscape: TBitmap; const Sun: TPolygonPoint);
+const
+  SunIntensity = 255;
+  coef = 1;
+var
+  wdth, hgth: Integer;
+  SunVector: TPolygonPoint;
+  angle: Extended;
+  Intensity: Extended;
+  color: TColor;
+  X, Y: Integer;
+  LowX, HighX: Integer;
+  Z: Extended;
+begin
+  wdth := landscape.Width div 2;
+  hgth := landscape.Height div 2;
+
+  SunVector.RealX := Sun.RealX - (polygon.Points[1].RealX +
+    polygon.Points[2].RealX + polygon.Points[3].RealX) / 3;
+  SunVector.RealY := Sun.RealY - (polygon.Points[1].RealY +
+    polygon.Points[2].RealY + polygon.Points[3].RealY) / 3;
+  SunVector.RealZ := Sun.RealZ - (polygon.Points[1].RealZ +
+    polygon.Points[2].RealZ + polygon.Points[3].RealZ) / 3;
+
+  NormalizeVector(SunVector);
+
+  angle := polygon.Normal.RealX * SunVector.RealX +
+    polygon.Normal.RealY * SunVector.RealY +
+    polygon.Normal.RealZ * SunVector.RealZ;
+
+  Intensity := SunIntensity * coef * angle;
+  color := rgb(0, Round(Intensity), 0);
+
+  if polygon.Points[2].ProjY < polygon.Points[3].ProjY then
+  begin
+    for Y := Round(polygon.Points[1].ProjY) to Round(polygon.Points[2].ProjY) do
+    begin
+      LowX := GetIntersectX(polygon.Points[1], polygon.Points[3], Y);
+      HighX := GetIntersectX(polygon.Points[1], polygon.Points[2], Y);
+      for X := LowX to HighX do
+      begin
+        Z := GetZOnPlane(polygon, x, y);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
+      end;
+    end;
+    for Y := Round(polygon.Points[2].ProjY) to Round(polygon.Points[3].ProjY) do
+    begin
+      LowX := GetIntersectX(polygon.Points[1], polygon.Points[3], Y);
+      HighX := GetIntersectX(polygon.Points[2], polygon.Points[3], Y);
+      for X := LowX to HighX do
+      begin
+        Z := GetZOnPlane(polygon, x, y);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
+      end;
+    end;
+  end
+  else
+  begin
+    for Y := Round(polygon.Points[1].ProjY) to Round(polygon.Points[3].ProjY) do
+    begin
+      LowX := GetIntersectX(polygon.Points[1], polygon.Points[3], Y);
+      HighX := GetIntersectX(polygon.Points[1], polygon.Points[2], Y);
+      for X := LowX to HighX do
+      begin
+        Z := GetZOnPlane(polygon, x, y);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
+      end;
+    end;
+    for Y := Round(polygon.Points[3].ProjY) to Round(polygon.Points[2].ProjY) do
+    begin
+      LowX := GetIntersectX(polygon.Points[2], polygon.Points[3], Y);
+      HighX := GetIntersectX(polygon.Points[1], polygon.Points[2], Y);
+      for X := LowX to HighX do
+      begin
+        Z := GetZOnPlane(polygon, x, y);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
+      end;
+    end;
+  end;
+end;
+
+procedure DrawSimple(var Model: TPolygonPoints;
+                   const Camera: TPolygonPoint;
+                   const Sun: TPolygonPoint;
+                   const Alpha, Beta: extended;
+                   var landscape: TBitmap);
+var
+  X, Y: Integer;
+  ZBuffer: TZBuffer;
+begin
+  CentralProjectionOfModel(Model, Camera, Alpha, Beta);
+
+  landscape.canvas.Brush.Color := clwhite;
+  landscape.canvas.Brush.Style := bsSolid;
+  landscape.canvas.Rectangle(-10, -10, 10000, 10000);
+  landscape.Canvas.Pen.Width := 1;
+
+  SetLength(Zbuffer, landscape.Width, landscape.Height);
+
+  for X := Low(ZBuffer) to High(ZBuffer) do
+  begin
+    for Y := Low(ZBuffer[0]) to High(ZBuffer[0]) do
+    begin
+      ZBuffer[X, Y] := Low(Integer);
+    end;
+  end;
+
+  for X := Low(model) to High(model) - 1 do
+  begin
+    for Y := Low(model[Low(model)]) to High(model[Low(model)]) - 1 do
+    begin
+      DrawSimplePolygon(MakePolygon(model[x, y], model[x + 1, y], model[x + 1, y + 1]), ZBuffer, landscape, sun);
+      DrawSimplePolygon(MakePolygon(model[x, y], model[x, y + 1], model[x + 1, y + 1]), ZBuffer, landscape, sun);
+    end;
+  end;
+end;
+
+procedure DrawWire(var Model: TPolygonPoints;
                    const Camera: TPolygonPoint;
                    const Alpha, Beta: extended;
                    var landscape: TBitmap);
 var
-  Projection: TPolygonPoints;
   X, Y: Integer;
   wdth, hgth: Integer;
 begin
-  Projection := CentralProjectionOfModel(Model, Camera, Alpha, Beta);
+  CentralProjectionOfModel(Model, Camera, Alpha, Beta);
 
   landscape.canvas.Brush.Color := clwhite;
   landscape.canvas.Brush.Style := bsSolid;
@@ -141,20 +378,20 @@ begin
     begin
       with landscape do
       begin
-      canvas.MoveTo(wdth + Round(Projection[X, Y].X), hgth + Round(Projection[X, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
+      canvas.MoveTo(wdth + Round(Model[X, Y].ProjX), hgth + Round(Model[X, Y].ProjY));
+      canvas.LineTo(wdth + Round(Model[X + 1, Y].ProjX), hgth + Round(Model[X + 1, Y].ProjY));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y].X), hgth + Round(Projection[X, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
+      canvas.MoveTo(wdth + Round(Model[X, Y].ProjX), hgth + Round(Model[X, Y].ProjY));
+      canvas.LineTo(wdth + Round(Model[X, Y + 1].ProjX), hgth + Round(Model[X, Y + 1].ProjY));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
+      canvas.MoveTo(wdth + Round(Model[X, Y + 1].ProjX), hgth + Round(Model[X, Y + 1].ProjY));
+      canvas.LineTo(wdth + Round(Model[X + 1, Y].ProjX), hgth + Round(Model[X + 1, Y].ProjY));
 
-      canvas.MoveTo(wdth + Round(Projection[X, Y + 1].X), hgth + Round(Projection[X, Y + 1].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y + 1].X), hgth + Round(Projection[X + 1, Y + 1].Y));
+      canvas.MoveTo(wdth + Round(Model[X, Y + 1].ProjX), hgth + Round(Model[X, Y + 1].ProjY));
+      canvas.LineTo(wdth + Round(Model[X + 1, Y + 1].ProjX), hgth + Round(Model[X + 1, Y + 1].ProjY));
 
-      canvas.MoveTo(wdth + Round(Projection[X + 1, Y].X), hgth + Round(Projection[X + 1, Y].Y));
-      canvas.LineTo(wdth + Round(Projection[X + 1, Y + 1].X), hgth + Round(Projection[X + 1, Y + 1].Y));
+      canvas.MoveTo(wdth + Round(Model[X + 1, Y].ProjX), hgth + Round(Model[X + 1, Y].ProjY));
+      canvas.LineTo(wdth + Round(Model[X + 1, Y + 1].ProjX), hgth + Round(Model[X + 1, Y + 1].ProjY));
       end;
     end;
   end;

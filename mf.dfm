@@ -104,10 +104,48 @@ object MainForm: TMainForm
     object tsLight: TTabSheet
       Caption = #1057#1074#1077#1090
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      object leSunX: TLabeledEdit
+        Left = 11
+        Top = 32
+        Width = 121
+        Height = 21
+        EditLabel.Width = 66
+        EditLabel.Height = 13
+        EditLabel.Caption = #1055#1086#1083#1086#1078#1077#1085#1080#1077' X'
+        TabOrder = 0
+        Text = '0'
+      end
+      object leSunY: TLabeledEdit
+        Left = 11
+        Top = 72
+        Width = 121
+        Height = 21
+        EditLabel.Width = 66
+        EditLabel.Height = 13
+        EditLabel.Caption = #1055#1086#1083#1086#1078#1077#1085#1080#1077' Y'
+        TabOrder = 1
+        Text = '0'
+      end
+      object leSunZ: TLabeledEdit
+        Left = 11
+        Top = 120
+        Width = 121
+        Height = 21
+        EditLabel.Width = 66
+        EditLabel.Height = 13
+        EditLabel.Caption = #1055#1086#1083#1086#1078#1077#1085#1080#1077' Z'
+        TabOrder = 2
+        Text = '0'
+      end
+      object btSunApply: TButton
+        Left = 11
+        Top = 256
+        Width = 121
+        Height = 57
+        Caption = #1055#1088#1080#1084#1077#1085#1080#1090#1100
+        TabOrder = 3
+        OnClick = btCameraApplyClick
+      end
     end
   end
   object MainMenu: TMainMenu
