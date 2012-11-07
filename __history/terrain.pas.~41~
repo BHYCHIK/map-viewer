@@ -3,7 +3,7 @@ unit terrain;
 interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls, jpeg;
+  Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls;
 
 type
   TPolygonPoint = record
@@ -103,14 +103,8 @@ begin
         Polygon.Points[1].ProjY * Polygon.Points[3].ProjZ) +
         Polygon.Points[3].ProjX * (Polygon.Points[1].ProjY * Polygon.Points[2].ProjZ -
         Polygon.Points[2].ProjY * Polygon.Points[1].ProjZ));
-  if c <> 0 then
-  begin
-    Result := (-a*x-b*y-d)/c;
-  end
-  else
-  begin
-    Result := Polygon.Points[1].ProjZ;
-  end;
+
+  Result := (-a*x-b*y-d)/c;
 end;
 
 function OpenTerrain(const path: String): TPolygonPoints;
@@ -226,20 +220,15 @@ end;
 
 function GetIntersectX(const P1, P2: TPolygonPoint; const C: Integer):Integer;
 begin
-  if (P2.ProjY - P1.ProjY) <> 0 then
-    result := Round((P2.ProjX - P1.ProjX)*(C - P1.ProjY)/(P2.ProjY - P1.ProjY) + P1.ProjX)
-  else
-    result := Round(P2.ProjX);
+  result := Round(P1.ProjX + (P2.ProjX - P1.ProjX)) * C;
 end;
 
 procedure ZBufferHandler(const X, Y: Integer; const Z: Extended; var ZBuffer: TZBuffer;
   var landscape: TBitmap; color: TColor);
-var
-  a : INteger;
 begin
   if (X >= 0) and (X <= High(ZBuffer)) and (Y >= 0) and (Y <= High(ZBuffer[0])) then
   begin
-    if (ZBuffer[X, Y] <= Z) or (ZBuffer[X, Y] = 78178.556611) then
+    if (ZBuffer[X, Y] < Z) or (ZBuffer[X, Y] = 78178.556611) then
     begin
       ZBuffer[X, Y] := Z;
       landscape.Canvas.Pixels[X, Y] := color;
@@ -261,7 +250,11 @@ var
   X, Y: Integer;
   LowX, HighX: Integer;
   Z: Extended;
+  A: integer;
 begin
+  wdth := landscape.Width div 2;
+  hgth := landscape.Height div 2;
+
   SunVector.RealX := Sun.RealX - (polygon.Points[1].RealX +
     polygon.Points[2].RealX + polygon.Points[3].RealX) / 3;
   SunVector.RealY := Sun.RealY - (polygon.Points[1].RealY +
@@ -277,6 +270,7 @@ begin
 
   Intensity := SunIntensity * coef * angle;
   color := rgb(0, Round(Intensity), 0);
+
 
   if polygon.Points[2].ProjY < polygon.Points[3].ProjY then
   begin
@@ -326,21 +320,6 @@ begin
   end;
 end;
 
-function Check(var Model: TPolygonPoints): boolean;
-var
-  X, Y :integer;
-begin
-  result := false;
-  for X := Low(model) to High(model) - 1 do
-  begin
-    for Y := Low(model[X]) to High(model[X]) - 1 do
-    begin
-      if (model[x,y].ProjX < 2) and (model[x,y].ProjY > 40) then
-        result := true;
-    end;
-  end;
-end;
-
 procedure DrawSimple(var Model: TPolygonPoints;
                    const Camera: TPolygonPoint;
                    const Sun: TPolygonPoint;
@@ -352,7 +331,7 @@ var
 begin
   CentralProjectionOfModel(Model, Camera, Alpha, Beta);
 
-  landscape.canvas.Brush.Color := clBlack;
+  landscape.canvas.Brush.Color := clwhite;
   landscape.canvas.Brush.Style := bsSolid;
   landscape.canvas.Rectangle(-10, -10, 10000, 10000);
   landscape.Canvas.Pen.Width := 1;

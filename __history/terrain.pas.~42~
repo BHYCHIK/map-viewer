@@ -239,7 +239,7 @@ var
 begin
   if (X >= 0) and (X <= High(ZBuffer)) and (Y >= 0) and (Y <= High(ZBuffer[0])) then
   begin
-    if (ZBuffer[X, Y] <= Z) or (ZBuffer[X, Y] = 78178.556611) then
+    if (ZBuffer[X, Y] < Z) or (ZBuffer[X, Y] = 78178.556611) then
     begin
       ZBuffer[X, Y] := Z;
       landscape.Canvas.Pixels[X, Y] := color;
@@ -261,7 +261,11 @@ var
   X, Y: Integer;
   LowX, HighX: Integer;
   Z: Extended;
+  A: integer;
 begin
+  wdth := landscape.Width div 2;
+  hgth := landscape.Height div 2;
+
   SunVector.RealX := Sun.RealX - (polygon.Points[1].RealX +
     polygon.Points[2].RealX + polygon.Points[3].RealX) / 3;
   SunVector.RealY := Sun.RealY - (polygon.Points[1].RealY +
@@ -277,6 +281,11 @@ begin
 
   Intensity := SunIntensity * coef * angle;
   color := rgb(0, Round(Intensity), 0);
+
+  if (polygon.Points[2].ProjX < 5) and  (polygon.Points[2].ProjY > 50)then
+   a := 2;
+
+
 
   if polygon.Points[2].ProjY < polygon.Points[3].ProjY then
   begin

@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls, terrain, jpeg;
+  Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls, terrain;
 
 type
   TMainForm = class(TForm)
@@ -61,7 +61,7 @@ begin
   sun.RealZ := StrToFloat(leSunZ.Text);
 
   {DrawWire(model, camera, StrToFloat(leRotAlpha.Text), StrToFloat(leRoBeta.Text),
-    terrainView);    }
+    terrainView);}
   DrawSimple(model, camera, sun,StrToFloat(leRotAlpha.Text), StrToFloat(leRoBeta.Text), terrainView);
 
 

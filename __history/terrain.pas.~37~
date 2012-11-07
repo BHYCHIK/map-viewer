@@ -3,7 +3,7 @@ unit terrain;
 interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls, jpeg;
+  Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls;
 
 type
   TPolygonPoint = record
@@ -48,7 +48,7 @@ begin
   Alpha := Alpha * PI / 180.0;
   Beta := Beta * PI / 180.0;
 
-  //Zplane := camera.RealZ - 9000;
+  Zplane := camera.RealZ - 9000;
 
   CosAlpha := Cos(Alpha);
   CosBeta := Cos(Beta);
@@ -83,39 +83,33 @@ end;
 
 function GetZOnPlane(const Polygon: TPolygon; const X, Y: Extended):Extended;
 var
+  X21, Y21, Z21, X31, Y31, Z31: Extended;
   a, b, c, d: Extended;
+  pnt: TPolygonPoint;
 begin
-  A := Polygon.Points[1].ProjY * (Polygon.Points[2].ProjZ - Polygon.Points[3].ProjZ)
-    + Polygon.Points[2].ProjY * (Polygon.Points[3].ProjZ - Polygon.Points[1].ProjZ) +
-      Polygon.Points[3].ProjY * (Polygon.Points[1].ProjZ - Polygon.Points[2].ProjZ);
+  X21 := Polygon.Points[2].ProjX - Polygon.Points[1].ProjX;
+  Y21 := Polygon.Points[2].ProjY - Polygon.Points[1].ProjY;
+  Z21 := Polygon.Points[2].ProjZ - Polygon.Points[1].ProjZ;
+  X31 := Polygon.Points[3].ProjX - Polygon.Points[1].ProjX;
+  Y31 := Polygon.Points[3].ProjY - Polygon.Points[1].ProjY;
+  Z31 := Polygon.Points[3].ProjZ - Polygon.Points[1].ProjZ;
 
-  B := Polygon.Points[1].ProjZ * (Polygon.Points[2].ProjX - Polygon.Points[3].ProjX)
-    + Polygon.Points[2].ProjZ * (Polygon.Points[3].ProjX - Polygon.Points[1].ProjX) +
-      Polygon.Points[3].ProjZ * (Polygon.Points[1].ProjX - Polygon.Points[2].ProjX);
+  a := y21 * z31 - y31 * z21;
+  b := z21 * x31 - z31 * x21;
+  c := x21 * y31 - x31 * y21;
+  d := x31 * y21 * Polygon.Points[1].ProjZ + y31*z21*Polygon.Points[1].ProjX +
+      x21 * y31 * Polygon.Points[1].ProjY - y21 * z31 * Polygon.Points[1].ProjX -
+      x21 * y31 * Polygon.Points[1].ProjZ - z21 * x31 * Polygon.Points[1].ProjY;
 
-  C := Polygon.Points[1].ProjX * (Polygon.Points[2].ProjY - Polygon.Points[3].ProjY)
-    + Polygon.Points[2].ProjX * (Polygon.Points[3].ProjY - Polygon.Points[1].ProjY) +
-      Polygon.Points[3].ProjX * (Polygon.Points[1].ProjY - Polygon.Points[2].ProjY);
-
-  D := -(Polygon.Points[1].ProjX * (Polygon.Points[2].ProjY * Polygon.Points[3].ProjZ -
-        Polygon.Points[3].ProjY * Polygon.Points[2].ProjZ) +
-        Polygon.Points[2].ProjX * (Polygon.Points[3].ProjY * Polygon.Points[1].ProjZ -
-        Polygon.Points[1].ProjY * Polygon.Points[3].ProjZ) +
-        Polygon.Points[3].ProjX * (Polygon.Points[1].ProjY * Polygon.Points[2].ProjZ -
-        Polygon.Points[2].ProjY * Polygon.Points[1].ProjZ));
   if c <> 0 then
-  begin
-    Result := (-a*x-b*y-d)/c;
-  end
+    result := (-a*x-b*y-d)/c
   else
-  begin
-    Result := Polygon.Points[1].ProjZ;
-  end;
+    result := Polygon.Points[1].ProjZ;
 end;
 
 function OpenTerrain(const path: String): TPolygonPoints;
 const
-  Modifier = 2;
+  Modifier = 15;
 var
   map: TBitmap;
   X, Y: Integer;
@@ -143,7 +137,7 @@ var
 begin
   for X := Low(model) to High(model) do
   begin
-    for Y := Low(model[0]) to High(model[0]) do
+    for Y := Low(model[Low(model)]) to High(model[Low(model)]) do
     begin
       CentralProjectionOfPoint(model[X, Y], camera, Alpha, Beta);
     end;
@@ -226,20 +220,15 @@ end;
 
 function GetIntersectX(const P1, P2: TPolygonPoint; const C: Integer):Integer;
 begin
-  if (P2.ProjY - P1.ProjY) <> 0 then
-    result := Round((P2.ProjX - P1.ProjX)*(C - P1.ProjY)/(P2.ProjY - P1.ProjY) + P1.ProjX)
-  else
-    result := Round(P2.ProjX);
+  result := Round(P1.ProjX + (P2.ProjX - P1.ProjX)) * C;
 end;
 
 procedure ZBufferHandler(const X, Y: Integer; const Z: Extended; var ZBuffer: TZBuffer;
   var landscape: TBitmap; color: TColor);
-var
-  a : INteger;
 begin
   if (X >= 0) and (X <= High(ZBuffer)) and (Y >= 0) and (Y <= High(ZBuffer[0])) then
   begin
-    if (ZBuffer[X, Y] <= Z) or (ZBuffer[X, Y] = 78178.556611) then
+    if ZBuffer[X, Y] < Z then
     begin
       ZBuffer[X, Y] := Z;
       landscape.Canvas.Pixels[X, Y] := color;
@@ -262,6 +251,9 @@ var
   LowX, HighX: Integer;
   Z: Extended;
 begin
+  wdth := landscape.Width div 2;
+  hgth := landscape.Height div 2;
+
   SunVector.RealX := Sun.RealX - (polygon.Points[1].RealX +
     polygon.Points[2].RealX + polygon.Points[3].RealX) / 3;
   SunVector.RealY := Sun.RealY - (polygon.Points[1].RealY +
@@ -287,7 +279,7 @@ begin
       for X := LowX to HighX do
       begin
         Z := GetZOnPlane(polygon, x, y);
-        ZBufferHandler(X, Y, Z, ZBuffer, landscape, color);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
       end;
     end;
     for Y := Round(polygon.Points[2].ProjY) to Round(polygon.Points[3].ProjY) do
@@ -297,7 +289,7 @@ begin
       for X := LowX to HighX do
       begin
         Z := GetZOnPlane(polygon, x, y);
-        ZBufferHandler(X, Y, Z, ZBuffer, landscape, color);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
       end;
     end;
   end
@@ -310,7 +302,7 @@ begin
       for X := LowX to HighX do
       begin
         Z := GetZOnPlane(polygon, x, y);
-        ZBufferHandler(X, Y, Z, ZBuffer, landscape, color);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
       end;
     end;
     for Y := Round(polygon.Points[3].ProjY) to Round(polygon.Points[2].ProjY) do
@@ -320,23 +312,8 @@ begin
       for X := LowX to HighX do
       begin
         Z := GetZOnPlane(polygon, x, y);
-        ZBufferHandler(X, Y, Z, ZBuffer, landscape, color);
+        ZBufferHandler(X + wdth, Y + hgth, Z, ZBuffer, landscape, color);
       end;
-    end;
-  end;
-end;
-
-function Check(var Model: TPolygonPoints): boolean;
-var
-  X, Y :integer;
-begin
-  result := false;
-  for X := Low(model) to High(model) - 1 do
-  begin
-    for Y := Low(model[X]) to High(model[X]) - 1 do
-    begin
-      if (model[x,y].ProjX < 2) and (model[x,y].ProjY > 40) then
-        result := true;
     end;
   end;
 end;
@@ -352,7 +329,7 @@ var
 begin
   CentralProjectionOfModel(Model, Camera, Alpha, Beta);
 
-  landscape.canvas.Brush.Color := clBlack;
+  landscape.canvas.Brush.Color := clwhite;
   landscape.canvas.Brush.Style := bsSolid;
   landscape.canvas.Rectangle(-10, -10, 10000, 10000);
   landscape.Canvas.Pen.Width := 1;
@@ -363,13 +340,13 @@ begin
   begin
     for Y := Low(ZBuffer[0]) to High(ZBuffer[0]) do
     begin
-      ZBuffer[X, Y] := 78178.556611;
+      ZBuffer[X, Y] := Low(Integer);
     end;
   end;
 
   for X := Low(model) to High(model) - 1 do
   begin
-    for Y := Low(model[X]) to High(model[X]) - 1 do
+    for Y := Low(model[Low(model)]) to High(model[Low(model)]) - 1 do
     begin
       DrawSimplePolygon(MakePolygon(model[x, y], model[x + 1, y], model[x + 1, y + 1]), ZBuffer, landscape, sun);
       DrawSimplePolygon(MakePolygon(model[x, y], model[x, y + 1], model[x + 1, y + 1]), ZBuffer, landscape, sun);
