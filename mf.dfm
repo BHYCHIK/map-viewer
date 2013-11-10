@@ -14,6 +14,7 @@ object MainForm: TMainForm
   OldCreateOrder = False
   OnClose = FormClose
   OnCreate = FormCreate
+  OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
   object pbLandscape: TPaintBox
@@ -22,6 +23,8 @@ object MainForm: TMainForm
     Width = 692
     Height = 576
     Align = alClient
+    OnMouseDown = pbLandscapeMouseDown
+    OnMouseUp = pbLandscapeMouseUp
     OnPaint = pbLandscapePaint
     ExplicitLeft = 200
     ExplicitWidth = 645
@@ -38,7 +41,7 @@ object MainForm: TMainForm
       Caption = #1050#1072#1084#1077#1088#1072
       object lePosX: TLabeledEdit
         Left = 3
-        Top = 24
+        Top = 160
         Width = 121
         Height = 21
         EditLabel.Width = 66
@@ -49,7 +52,7 @@ object MainForm: TMainForm
       end
       object lePosY: TLabeledEdit
         Left = 3
-        Top = 64
+        Top = 208
         Width = 121
         Height = 21
         EditLabel.Width = 66
@@ -63,31 +66,31 @@ object MainForm: TMainForm
         Top = 112
         Width = 121
         Height = 21
-        EditLabel.Width = 66
+        EditLabel.Width = 45
         EditLabel.Height = 13
-        EditLabel.Caption = #1055#1086#1083#1086#1078#1077#1085#1080#1077' Z'
+        EditLabel.Caption = #1052#1072#1089#1096#1090#1072#1073
         TabOrder = 2
-        Text = '0'
+        Text = '1'
       end
       object leRotAlpha: TLabeledEdit
         Left = 3
-        Top = 168
+        Top = 21
         Width = 121
         Height = 21
-        EditLabel.Width = 61
+        EditLabel.Width = 84
         EditLabel.Height = 13
-        EditLabel.Caption = #1055#1086#1074#1086#1088#1090' '#1087#1086' X'
+        EditLabel.Caption = #1055#1086#1074#1086#1088#1086#1090' '#1082#1072#1084#1077#1088#1099
         TabOrder = 3
         Text = '0'
       end
       object leRoBeta: TLabeledEdit
         Left = 3
-        Top = 211
+        Top = 67
         Width = 121
         Height = 21
-        EditLabel.Width = 67
+        EditLabel.Width = 78
         EditLabel.Height = 13
-        EditLabel.Caption = #1055#1086#1074#1086#1088#1086#1090' '#1087#1086' Y'
+        EditLabel.Caption = #1053#1072#1082#1083#1086#1085' '#1082#1072#1084#1077#1088#1099
         TabOrder = 4
         Text = '0'
       end
@@ -139,7 +142,7 @@ object MainForm: TMainForm
         EditLabel.Height = 13
         EditLabel.Caption = #1055#1086#1083#1086#1078#1077#1085#1080#1077' Z'
         TabOrder = 2
-        Text = '0'
+        Text = '9999999999'
       end
       object btSunApply: TButton
         Left = 11
@@ -161,6 +164,13 @@ object MainForm: TMainForm
         Caption = #1054#1090#1082#1088#1099#1090#1100
         OnClick = mmOpenClick
       end
+      object N1: TMenuItem
+        Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
+        OnClick = N1Click
+      end
+      object N2: TMenuItem
+        Caption = '-'
+      end
       object mmExit: TMenuItem
         Caption = #1042#1099#1093#1086#1076
         OnClick = mmExitClick
@@ -172,5 +182,10 @@ object MainForm: TMainForm
     Filter = #1053#1077#1086#1073#1088#1072#1073#1086#1090#1072#1085#1085#1072#1103' '#1082#1072#1088#1090#1072' '#1074#1099#1089#1086#1090'|*.rhmr'
     Left = 672
     Top = 248
+  end
+  object SavePictureDialog1: TSavePictureDialog
+    Filter = 'Bitmaps (*.bmp)|*.bmp'
+    Left = 744
+    Top = 320
   end
 end
